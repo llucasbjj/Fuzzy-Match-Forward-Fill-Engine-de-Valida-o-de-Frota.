@@ -1,0 +1,76 @@
+# ==========================================
+# FUNÇÕES GLOBAIS
+# ==========================================
+def higienizar(valor):
+    if not valor: return ""
+    v = str(valor).upper().strip()
+    limpo = ""
+    for c in v:
+        if (c >= 'A' and c <= 'Z') or (c >= '0' and c <= '9'):
+            limpo += c
+    return limpo.replace('G', '6').replace('4', 'A').replace('0', 'O')
+
+# ==========================================
+# BLOCO 1: TRATAMENTO DA ENTRADA (NOTA)
+# ==========================================
+primeiro_item_container = _items[0]
+dados_reais = primeiro_item_container["json"]
+
+v_placa_nota = dados_reais.get("placa_nota", "")
+v_motorista_nota = dados_reais.get("motorista_nota", "")
+
+placa_nota_limpa = higienizar(v_placa_nota)
+motorista_nota_limpo = str(v_motorista_nota).upper().strip()
+
+print(f"--- DEBUG BLOCO 1: {placa_nota_limpa} ---")
+
+# ==========================================
+# BLOCO 2: PROCESSAMENTO DA BASE (PLANILHA)
+# ==========================================
+base_final_planilha = []
+motorista_memoria = "SEM MOTORISTA"
+frota_memoria = "N/A"
+
+for registro in _items:
+    dados = registro["json"]
+    
+    p_plan = dados.get("placa", "")
+    m_plan = dados.get("Motorista", "")
+    f_plan = dados.get("Frota", "")
+    
+    # Lógica de Forward Fill (Herança)
+    if m_plan and str(m_plan).strip() != "":
+        motorista_memoria = str(m_plan).replace('?', '').upper().strip()
+        
+    if f_plan and str(f_plan).strip() != "":
+        frota_memoria = str(f_plan)
+        
+    if p_plan:
+        base_final_planilha.append({
+            "placa_oficial": p_plan,
+            "placa_limpa": higienizar(p_plan),
+            "motorista_vinculado": motorista_memoria,
+            "frota_vinculada": frota_memoria
+        })
+
+# ==========================================
+# RETORNO E DEBUG INTEGRADO
+# ==========================================
+return [{
+    "bloco_1_resultado": {
+        "placa_original": v_placa_nota,
+        "placa_processada": placa_nota_limpa,
+        "motorista_processado": motorista_nota_limpo,
+        "campos_lidos": list(dados_reais.keys())
+    }, # <-- Chave fechada corretamente aqui
+    "debug_bloco_2": {
+        "total_placas_processadas": len(base_final_planilha),
+        "entrada_detectada": {
+            "placa_procurada": placa_nota_limpa,
+            "motorista_procurado": motorista_nota_limpo
+        },
+        "amostra_base_tratada": base_final_planilha[:10] 
+    },
+    # Campo essencial para o próximo bloco (Engine de Match)
+    "base_completa": base_final_planilha
+}]
