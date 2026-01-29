@@ -1,3 +1,10 @@
+Resumo: Algoritmo em Python integrado ao n8n para validação de registros logísticos. Implementa Forward Fill para herança de dados hierárquicos e Scoring Ponderado (70/30) para normalização de erros de input humano em placas e nomes de motoristas
+
+
+
+
+
+
 📂 G10 Supply Chain Auth - Validador de Abastecimento Inteligente
 Este projeto consiste em uma engine de validação desenvolvida em Python integrada ao n8n, projetada para sanitizar e cruzar registros de abastecimento de frota pesada (G10 Transportes), mitigando erros humanos de entrada e garantindo a integridade dos dados operacionais.
 
