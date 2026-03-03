@@ -1,60 +1,55 @@
-Resumo: Algoritmo em Python integrado ao n8n para validação de registros logísticos. Implementa Forward Fill para herança de dados hierárquicos e Scoring Ponderado (70/30) para normalização de erros de input humano em placas e nomes de motoristas
+FuzzyMachine: Motor Inteligente de Validação e Correção de Placas
+Um módulo leve e de alta performance desenvolvido em Python para validação, sanitização e auto-correção de placas veiculares (padrão Mercosul e Antigo). Desenvolvido para atuar como uma camada de Programação Defensiva em pipelines de dados e robôs de RPA logísticos.
 
+🎯 O Problema (Por que este módulo existe?)
+Em operações logísticas de grande escala, a entrada de dados de placas de veículos sofre com dois grandes gargalos:
 
+Erros Humanos (Typos): Digitação incorreta em planilhas (ex: confundir a letra O com o número 0, ou a letra I com o número 1). Exemplo real: Digitar SPT1O14 em vez de SPT1014.
 
+Falhas de OCR: Leitores de PDF e softwares de visão computacional frequentemente leem caracteres arranhados em notas fiscais de forma equivocada (ex: RRMSD32 em vez de RRM5D32).
 
+Quando esses dados "sujos" chegam ao ERP ou banco de dados, eles geram falhas de integração, rejeição de notas fiscais e quebra de relatórios de frota.
 
+💡 A Solução: Fuzzy Logic & Regex
+O FuzzyMachine não faz apenas uma verificação booleana (Verdadeiro/Falso). Ele atua como um corretor ortográfico focado em logística:
 
-📂 G10 Supply Chain Auth - Validador de Abastecimento Inteligente
-Este projeto consiste em uma engine de validação desenvolvida em Python integrada ao n8n, projetada para sanitizar e cruzar registros de abastecimento de frota pesada (G10 Transportes), mitigando erros humanos de entrada e garantindo a integridade dos dados operacionais.
+Sanitização Extrema (Regex): Remove caracteres especiais, espaços, traços e sujeiras invisíveis, padronizando tudo para Uppercase alfanumérico.
 
-🎯 Problemas Resolvidos
-Erros de Input Humano: Substituição comum de caracteres em placas (ex: 'G' por '6', '0' por 'O').
+Validação de Formato: Identifica se a string resultante atende à matriz do padrão Brasileiro Antigo (ABC1234) ou Mercosul (ABC1D23).
 
-Dados Hierárquicos (Planilha Visual): O sistema resolve a ausência de dados em carretas vinculadas através de um algoritmo de Forward Fill.
+Auto-Correção com RapidFuzz: Utiliza algoritmos de Levenshtein Distance (Lógica Fuzzy) para comparar a placa suja contra um banco/dicionário de frota conhecida. Se a placa digitada tiver um nível de confiança alto (ex: 85%+) de semelhança com uma placa real da frota, o motor corrige o erro automaticamente e devolve a placa perfeita para o sistema.
 
-Identidade Flexível: Validação de motoristas através de Score Ponderado, permitindo correspondências parciais ou nomes abreviados.
+🚀 Impacto no Negócio
+Mitigação de Erros: Redução drástica de chamados de suporte e reprocessamento de notas fiscais por "Placa Não Encontrada".
 
-🛠️ Arquitetura Técnica
-1. Higienização e Normalização Agressiva
-Diferente de uma comparação simples, o sistema aplica uma limpeza que remove caracteres especiais e realiza substituições baseadas em falhas comuns de digitação de placas no setor logístico:
+Resiliência para RPAs: Permite que robôs de automação continuem operando mesmo quando ingerem planilhas com baixa qualidade de digitação, sem interromper o fluxo com paradas desnecessárias.
 
-G → 6
+💻 Exemplo de Uso
+Como este módulo se comporta na prática ao ser importado por outros sistemas:
 
-4 → A
+Python
+from src.validator import PlateValidator
 
-0 → O
+# Inicializa o validador com uma frota conhecida (Pode vir de um Banco de Dados)
+frota_valida = ["SPT1014", "RRM5D32", "ABC1234"]
+validador = PlateValidator(frota_conhecida=frota_valida)
 
-2. Algoritmo de Forward Fill (Herança de Contexto)
-Em planilhas logísticas, é comum que o Motorista e a Frota apareçam apenas na linha da Tração, deixando as linhas das carretas vazias. O código mantém um estado de memória (motorista_memoria) que propaga o último condutor válido para as linhas subsequentes.
+# Cenário 1: Erro humano clássico (Letra O no lugar do zero)
+placa_suja = "SPT1O14" 
+resultado = validador.validate_plate_fuzzy(placa_suja)
+print(resultado)
+# Output: {'is_match': True, 'best_match': 'SPT1014', 'confidence': 88.5, 'status': 'Auto-Corrigido'}
 
-3. Engine de Scoring Ponderado (70/30)
-O veredito de sucesso é baseado em um cálculo de probabilidade:
+# Cenário 2: Erro de leitura OCR (S no lugar do 5)
+placa_ocr = "Placa: RRMSD32- MT"
+resultado = validador.validate_plate_fuzzy(placa_ocr)
+print(resultado)
+# Output: {'is_match': True, 'best_match': 'RRM5D32', 'confidence': 90.0, 'status': 'Auto-Corrigido'}
+🛠️ Tecnologias Utilizadas
+Python 3.10+
 
-Placa (Peso 0.7): Identificação física do veículo (Match exato pós-higienização).
+RapidFuzz: Biblioteca C++ otimizada para Python, garantindo comparação de strings em microssegundos (muito mais rápida que o tradicional FuzzyWuzzy).
 
-Motorista (Peso 0.3): Identificação subjetiva (Match parcial/inclusão de string).
+Expressões Regulares (re): Para pattern matching rigoroso.
 
-Threshold: O sistema exige um score mínimo de 0.7 para aprovação automática.
-
-🚀 Como Executar
-No n8n:
-
-Conecte um nó de Google Sheets (Base Histórica).
-
-Conecte um nó de Edit Fields (Dados da Nota).
-
-Utilize o nó Code (Python) no modo Run Once for All Items.
-
-Variáveis Necessárias:
-
-placa_nota (String)
-
-motorista_nota (String)
-
-🧑‍💻 Tecnologias
-Python 3.x (Lógica de processamento)
-
-n8n (Orquestração de workflow)
-
-Google Sheets API (Data Source)
+"Dados limpos não são um luxo, são a fundação de qualquer automação estável."
